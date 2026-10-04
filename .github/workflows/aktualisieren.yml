@@ -1,0 +1,33 @@
+name: Ziehungen aktualisieren
+
+on:
+  schedule:
+    # Abends nach den Ziehungen und morgens als Nachzügler (Zeiten in UTC)
+    - cron: "20 22 * * *"
+    - cron: "20 8 * * *"
+  workflow_dispatch: # „Run workflow“-Knopf zum manuellen Starten
+
+permissions:
+  contents: write
+
+jobs:
+  aktualisieren:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ziehungen holen und prüfen
+        run: python aktualisieren.py
+      - name: Speichern, falls sich etwas geändert hat
+        run: |
+          if [ -n "$(git status --porcelain daten)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add daten
+            git commit -m "Ziehungen aktualisiert"
+            git push
+          else
+            echo "Keine neuen Ziehungen."
+          fi
